@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Browse Events - EventMan{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4">All Events</h1>
+    
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">City</label>
+                    <select name="city" class="form-select">
+                        <option value="">All Cities</option>
+                        {% for city in cities %}
+                        <option value="{{ city }}" {% if selected_city == city %}selected{% endif %}>{{ city }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Sort By</label>
+                    <select name="sort" class="form-select">
+                        <option value="date">Date</option>
+                        <option value="popularity">Popularity</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                    <a href="{% url 'events:event_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Events Grid -->
+    {% if events %}
+    <div class="row">
+        {% for event in events %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                {% if event.image %}
+                <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <i class="fas fa-calendar fa-3x text-white"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <span class="badge bg-primary mb-2">{{ event.category.name }}</span>
+                    <h5 class="card-title">{{ event.title|truncatewords:10 }}</h5>
+                    <p class="card-text text-muted small">
+                        <i class="fas fa-map-marker-alt"></i> {{ event.venue.name }}, {{ event.venue.city }}<br>
+                        <i class="fas fa-calendar"></i> {{ event.event_date|date:"M d, Y - h:i A" }}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge {% if event.available_seats > 50 %}bg-success{% elif event.available_seats > 10 %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ event.available_seats }} seats
+                        </span>
+                        <a href="{% url 'events:event_detail' event.slug %}" class="btn btn-primary btn-sm">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> No events found matching your criteria.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

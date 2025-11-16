@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Shopping Cart - EventMan{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mb-4"><i class="fas fa-shopping-cart"></i> Shopping Cart</h2>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Your Seats</h5>
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-clock"></i> {{ time_remaining }} minutes remaining
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if items %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i> Your seats are reserved for {{ time_remaining }} minutes. Please complete your booking before time expires.
+                    </div>
+                    
+                    <h5 class="mb-3">{{ cart.event.title }}</h5>
+                    <p class="text-muted">
+                        <i class="fas fa-calendar"></i> {{ cart.event.event_date|date:"F d, Y - h:i A" }}<br>
+                        <i class="fas fa-map-marker-alt"></i> {{ cart.event.venue.name }}, {{ cart.event.venue.city }}
+                    </p>
+                    
+                    <hr>
+                    
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Seat</th>
+                                    <th>Category</th>
+                                    <th>Price</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td><strong>{{ item.seat.row }}{{ item.seat.number }}</strong></td>
+                                    <td>{{ item.seat_category.name }}</td>
+                                    <td>₹{{ item.seat_category.price }}</td>
+                                    <td>
+                                        <a href="{% url 'bookings:remove_from_cart' item.id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Your cart is empty.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow sticky-top-custom">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Cart Summary</h5>
+                </div>
+                <div class="card-body">
+                    {% if items %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Number of Tickets:</span>
+                        <strong>{{ items.count }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Subtotal:</span>
+                        <strong>₹{{ total }}</strong>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-4">
+                        <strong>Total:</strong>
+                        <strong class="text-success fs-4">₹{{ total }}</strong>
+                    </div>
+                    
+                    <a href="{% url 'bookings:checkout' %}" class="btn btn-success btn-lg w-100 mb-2">
+                        <i class="fas fa-credit-card"></i> Proceed to Checkout
+                    </a>
+                    <a href="{% url 'bookings:select_seats' cart.event.slug %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-plus"></i> Add More Seats
+                    </a>
+                    {% else %}
+                    <p class="text-muted text-center">Your cart is empty</p>
+                    <a href="{% url 'events:event_list' %}" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Browse Events
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-redirect when cart expires
+setTimeout(function() {
+    alert('Your cart has expired. Please select seats again.');
+    window.location.href = "{% url 'events:home' %}";
+}, {{ time_remaining }} * 60 * 1000);
+</script>
+{% endblock %}

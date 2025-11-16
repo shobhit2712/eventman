@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - EventMan{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-white text-center py-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="container">
+        <h1 class="display-3 fw-bold mb-3">Discover Amazing Events</h1>
+        <p class="lead mb-4">Book tickets to the best concerts, sports, theater, and more!</p>
+        <a href="{% url 'events:event_list' %}" class="btn btn-light btn-lg">
+            <i class="fas fa-search"></i> Explore Events
+        </a>
+    </div>
+</section>
+
+<!-- Featured Events -->
+{% if featured_events %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="mb-4"><i class="fas fa-star text-warning"></i> Featured Events</h2>
+        <div class="row">
+            {% for event in featured_events %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    {% if event.image %}
+                    <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="fas fa-calendar fa-3x text-white"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <span class="badge bg-primary mb-2">{{ event.category.name }}</span>
+                        <h5 class="card-title">{{ event.title }}</h5>
+                        <p class="card-text text-muted">
+                            <i class="fas fa-map-marker-alt"></i> {{ event.venue.name }}, {{ event.venue.city }}<br>
+                            <i class="fas fa-calendar"></i> {{ event.event_date|date:"M d, Y - h:i A" }}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge {% if event.available_seats > 50 %}bg-success{% elif event.available_seats > 10 %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ event.available_seats }} seats left
+                            </span>
+                            <a href="{% url 'events:event_detail' event.slug %}" class="btn btn-primary btn-sm">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Categories -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="mb-4 text-center">Browse by Category</h2>
+        <div class="row text-center">
+            {% for category in categories %}
+            <div class="col-md-3 col-sm-6 mb-3">
+                <a href="{% url 'events:events_by_category' category.id %}" class="text-decoration-none">
+                    <div class="card shadow-sm h-100 category-card">
+                        <div class="card-body">
+                            <i class="fas {{ category.icon|default:'fa-calendar' }} fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">{{ category.name }}</h5>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Upcoming Events -->
+{% if upcoming_events %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="mb-4">Upcoming Events</h2>
+        <div class="row">
+            {% for event in upcoming_events %}
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="card h-100 shadow-sm">
+                    {% if event.image %}
+                    <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}" style="height: 150px; object-fit: cover;">
+                    {% else %}
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 150px;">
+                        <i class="fas fa-calendar fa-2x text-white"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h6 class="card-title">{{ event.title|truncatewords:8 }}</h6>
+                        <p class="card-text small text-muted">
+                            <i class="fas fa-map-marker-alt"></i> {{ event.venue.city }}<br>
+                            <i class="fas fa-calendar"></i> {{ event.event_date|date:"M d" }}
+                        </p>
+                        <a href="{% url 'events:event_detail' event.slug %}" class="btn btn-sm btn-outline-primary w-100">Book Now</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Call to Action -->
+<section class="py-5 bg-primary text-white text-center">
+    <div class="container">
+        <h2 class="mb-3">Ready to Experience Amazing Events?</h2>
+        <p class="lead mb-4">Join thousands of event-goers and book your tickets today!</p>
+        {% if not user.is_authenticated %}
+        <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg me-2">
+            <i class="fas fa-user-plus"></i> Sign Up Now
+        </a>
+        {% endif %}
+        <a href="{% url 'events:event_list' %}" class="btn btn-outline-light btn-lg">
+            <i class="fas fa-ticket-alt"></i> Browse All Events
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+    }
+    .category-card {
+        transition: transform 0.3s;
+    }
+    .category-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}

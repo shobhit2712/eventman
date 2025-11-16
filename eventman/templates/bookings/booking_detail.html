@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Booking Details - EventMan{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header {% if booking.booking_status == 'confirmed' %}bg-success{% elif booking.booking_status == 'cancelled' %}bg-danger{% else %}bg-warning{% endif %} text-white">
+                    <h4 class="mb-0">Booking Details</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h5>Booking ID: <span class="text-muted">{{ booking.booking_id }}</span></h5>
+                        <span class="badge {% if booking.booking_status == 'confirmed' %}bg-success{% elif booking.booking_status == 'cancelled' %}bg-danger{% else %}bg-warning{% endif %}">
+                            {{ booking.get_booking_status_display }}
+                        </span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h5>Event Information</h5>
+                    <div class="mb-3">
+                        <h6>{{ booking.event.title }}</h6>
+                        <p class="mb-1">
+                            <i class="fas fa-calendar"></i> {{ booking.event.event_date|date:"F d, Y - h:i A" }}<br>
+                            <i class="fas fa-map-marker-alt"></i> {{ booking.event.venue.name }}<br>
+                            {{ booking.event.venue.address }}<br>
+                            {{ booking.event.venue.city }}, {{ booking.event.venue.state }}
+                        </p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h5>Tickets</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Ticket ID</th>
+                                    <th>Seat</th>
+                                    <th>Category</th>
+                                    <th>Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ticket in tickets %}
+                                <tr>
+                                    <td><small>{{ ticket.ticket_id }}</small></td>
+                                    <td><strong>{{ ticket.seat.row }}{{ ticket.seat.number }}</strong></td>
+                                    <td>{{ ticket.seat_category.name }}</td>
+                                    <td>₹{{ ticket.price_paid }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h5>Contact Information</h5>
+                    <p>
+                        <strong>Name:</strong> {{ booking.contact_name }}<br>
+                        <strong>Email:</strong> {{ booking.contact_email }}<br>
+                        <strong>Phone:</strong> {{ booking.contact_phone }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Number of Tickets:</span>
+                        <strong>{{ booking.num_tickets }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total Amount:</span>
+                        <strong class="text-success">₹{{ booking.total_amount }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Payment Status:</span>
+                        <span class="badge {% if booking.payment_status == 'paid' %}bg-success{% else %}bg-warning{% endif %}">
+                            {{ booking.get_payment_status_display }}
+                        </span>
+                    </div>
+                    <hr>
+                    <p class="small text-muted mb-0">
+                        Booked on: {{ booking.booked_at|date:"M d, Y h:i A" }}
+                    </p>
+                    {% if booking.confirmed_at %}
+                    <p class="small text-muted mb-0">
+                        Confirmed on: {{ booking.confirmed_at|date:"M d, Y h:i A" }}
+                    </p>
+                    {% endif %}
+                    
+                    {% if booking.booking_status == 'confirmed' %}
+                    <hr>
+                    <a href="{% url 'bookings:cancel_booking' booking.booking_id %}" class="btn btn-danger w-100">
+                        <i class="fas fa-times"></i> Cancel Booking
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6>Need Help?</h6>
+                    <p class="mb-1 small"><i class="fas fa-phone"></i> 9389761563</p>
+                    <p class="mb-0 small"><i class="fas fa-envelope"></i> techslave19@gmail.com</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-4">
+        <a href="{% url 'bookings:my_bookings' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to My Bookings
+        </a>
+    </div>
+</div>
+{% endblock %}

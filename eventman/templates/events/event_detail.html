@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ event.title }} - EventMan{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Event Header -->
+    <div class="row">
+        <div class="col-lg-8">
+            {% if event.banner_image %}
+            <img src="{{ event.banner_image.url }}" class="img-fluid rounded mb-4" alt="{{ event.title }}">
+            {% elif event.image %}
+            <img src="{{ event.image.url }}" class="img-fluid rounded mb-4" alt="{{ event.title }}">
+            {% endif %}
+            
+            <h1 class="mb-3">{{ event.title }}</h1>
+            
+            <div class="mb-4">
+                <span class="badge bg-primary">{{ event.category.name }}</span>
+                <span class="badge bg-{{ event.status }} ms-2">{{ event.get_status_display }}</span>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-info-circle"></i> Event Details</h5>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-calendar-alt"></i> Date:</strong><br>
+                            {{ event.event_date|date:"l, F d, Y" }}</p>
+                            <p><strong><i class="fas fa-clock"></i> Time:</strong><br>
+                            {{ event.event_date|date:"h:i A" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-map-marker-alt"></i> Venue:</strong><br>
+                            {{ event.venue.name }}<br>
+                            {{ event.venue.address }}<br>
+                            {{ event.venue.city }}, {{ event.venue.state }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-align-left"></i> Description</h5>
+                    <hr>
+                    <p>{{ event.description|linebreaks }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Booking Card -->
+            <div class="card shadow sticky-top" style="top: 20px;">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Book Tickets</h5>
+                    
+                    {% if event.is_sold_out %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> Sold Out
+                        </div>
+                    {% else %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Available Seats:</span>
+                                <strong>{{ event.available_seats }} / {{ event.total_seats }}</strong>
+                            </div>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar {% if event.available_seats > 50 %}bg-success{% elif event.available_seats > 20 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ event.get_booking_percentage }}%">
+                                    {{ event.get_booking_percentage|floatformat:0 }}%
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h6 class="mb-3">Seat Categories:</h6>
+                        {% for cat in seat_categories %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                            <div>
+                                <strong>{{ cat.name }}</strong><br>
+                                <small class="text-muted">{{ cat.available_seats }} available</small>
+                            </div>
+                            <div class="text-end">
+                                <strong class="text-primary">₹{{ cat.price }}</strong>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        <hr>
+                        
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'bookings:select_seats' event.slug %}" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-ticket-alt"></i> Select Seats
+                            </a>
+                        {% else %}
+                            <a href="{% url 'accounts:login' %}?next={% url 'events:event_detail' event.slug %}" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-sign-in-alt"></i> Login to Book
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <div class="mt-3 text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt"></i> Secure booking guaranteed
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Info -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">Need Help?</h6>
+                    <p class="mb-1"><i class="fas fa-phone"></i> 9389761563</p>
+                    <p class="mb-0"><i class="fas fa-envelope"></i> techslave19@gmail.com</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Real-time seat availability check
+function checkAvailability() {
+    fetch("{% url 'events:check_seats' event.id %}")
+        .then(response => response.json())
+        .then(data => {
+            console.log('Seat availability updated', data);
+            // Update UI with real-time data if needed
+        });
+}
+
+// Check every 30 seconds
+setInterval(checkAvailability, 30000);
+</script>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - EventMan{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow text-center">
+                <div class="card-body py-5">
+                    {% if profile.profile_picture %}
+                    <img src="{{ profile.profile_picture.url }}" class="profile-img mb-3" alt="{{ user.username }}">
+                    {% else %}
+                    <div class="profile-img mx-auto mb-3 bg-primary d-flex align-items-center justify-content-center text-white" style="font-size: 3rem;">
+                        {{ user.username.0|upper }}
+                    </div>
+                    {% endif %}
+                    <h4>{{ user.get_full_name|default:user.username }}</h4>
+                    <p class="text-muted">@{{ user.username }}</p>
+                    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Username:</strong></div>
+                        <div class="col-sm-8">{{ user.username }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Email:</strong></div>
+                        <div class="col-sm-8">{{ user.email }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Phone:</strong></div>
+                        <div class="col-sm-8">{{ profile.phone|default:"Not provided" }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Address:</strong></div>
+                        <div class="col-sm-8">
+                            {% if profile.address %}
+                                {{ profile.address }}<br>
+                                {{ profile.city }}, {{ profile.state }} {{ profile.zipcode }}<br>
+                                {{ profile.country }}
+                            {% else %}
+                                Not provided
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Member Since:</strong></div>
+                        <div class="col-sm-8">{{ user.date_joined|date:"F d, Y" }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow mt-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Preferences</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-sm-8"><strong>Receive Notifications</strong></div>
+                        <div class="col-sm-4 text-end">
+                            {% if profile.receive_notifications %}
+                            <span class="badge bg-success">Enabled</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Disabled</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-8"><strong>Receive Promotional Emails</strong></div>
+                        <div class="col-sm-4 text-end">
+                            {% if profile.receive_promotional_emails %}
+                            <span class="badge bg-success">Enabled</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Disabled</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

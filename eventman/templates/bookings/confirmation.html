@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Booking Confirmed - EventMan{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle text-success" style="font-size: 80px;"></i>
+                    </div>
+                    <h1 class="mb-3">Booking Confirmed!</h1>
+                    <p class="lead text-muted">Your tickets have been successfully booked.</p>
+                    
+                    <div class="alert alert-info">
+                        <strong>Booking ID:</strong> {{ booking.booking_id }}
+                    </div>
+                    
+                    <div class="card my-4 text-start">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Booking Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <h5>{{ booking.event.title }}</h5>
+                            <p class="mb-2">
+                                <strong><i class="fas fa-calendar"></i> Date:</strong> {{ booking.event.event_date|date:"F d, Y - h:i A" }}<br>
+                                <strong><i class="fas fa-map-marker-alt"></i> Venue:</strong> {{ booking.event.venue.name }}, {{ booking.event.venue.city }}
+                            </p>
+                            <hr>
+                            <h6>Your Tickets:</h6>
+                            <ul class="list-group list-group-flush">
+                                {% for ticket in tickets %}
+                                <li class="list-group-item">
+                                    Seat: <strong>{{ ticket.seat.row }}{{ ticket.seat.number }}</strong> - {{ ticket.seat_category.name }} (₹{{ ticket.price_paid }})
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <strong>Total Amount Paid:</strong>
+                                <strong class="text-success">₹{{ booking.total_amount }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="text-muted mb-4">
+                        A confirmation email has been sent to <strong>{{ booking.contact_email }}</strong>
+                    </p>
+                    
+                    <div class="d-flex gap-3 justify-content-center">
+                        <a href="{% url 'bookings:booking_detail' booking.booking_id %}" class="btn btn-primary">
+                            <i class="fas fa-file-alt"></i> View Full Details
+                        </a>
+                        <a href="{% url 'events:home' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-home"></i> Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+
+{% block title %}Select Seats - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mb-4">Select Your Seats - {{ event.title }}</h2>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5><i class="fas fa-info-circle"></i> Event Information</h5>
+                    <p class="mb-1"><strong>Venue:</strong> {{ event.venue.name }}</p>
+                    <p class="mb-1"><strong>Date:</strong> {{ event.event_date|date:"F d, Y - h:i A" }}</p>
+                    <p class="mb-0"><strong>Available Seats:</strong> {{ event.available_seats }}</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chair"></i> Seat Categories</h5>
+                </div>
+                <div class="card-body">
+                    {% for category in seat_categories %}
+                    <div class="seat-category mb-4 p-3 border rounded" data-category-id="{{ category.id }}">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h5 class="mb-1">{{ category.name }}</h5>
+                                <p class="mb-0 text-muted">{{ category.description }}</p>
+                            </div>
+                            <div class="text-end">
+                                <h4 class="text-primary mb-0">₹{{ category.price }}</h4>
+                                <small class="text-muted">{{ category.available_seats }} available</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Seat Grid -->
+                        <div class="seat-grid">
+                            {% for seat in category.seats.all %}
+                            <button type="button" 
+                                    class="seat-btn {% if seat.status == 'available' %}available{% elif seat.status == 'booked' %}booked{% else %}reserved{% endif %}"
+                                    data-seat-id="{{ seat.id }}"
+                                    data-category-id="{{ category.id }}"
+                                    data-price="{{ category.price }}"
+                                    {% if seat.status != 'available' %}disabled{% endif %}>
+                                {{ seat.row }}{{ seat.number }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="legend mt-4">
+                        <h6>Legend:</h6>
+                        <span class="badge bg-success me-2">■ Available</span>
+                        <span class="badge bg-danger me-2">■ Booked</span>
+                        <span class="badge bg-warning me-2">■ Reserved</span>
+                        <span class="badge bg-primary">■ Selected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> Your Selection</h5>
+                </div>
+                <div class="card-body">
+                    <div id="selected-seats-list">
+                        <p class="text-muted">No seats selected</p>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <strong>Total:</strong>
+                        <strong class="text-primary" id="total-price">₹0</strong>
+                    </div>
+                    <hr>
+                    <button type="button" id="add-to-cart-btn" class="btn btn-primary w-100" disabled>
+                        <i class="fas fa-shopping-cart"></i> Add to Cart
+                    </button>
+                    <a href="{% url 'bookings:view_cart' %}" class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="fas fa-eye"></i> View Cart
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.seat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.seat-btn {
+    padding: 10px 5px;
+    border: 2px solid #ddd;
+    background: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.seat-btn.available {
+    background: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.seat-btn.available:hover {
+    background: #218838;
+    transform: scale(1.1);
+}
+
+.seat-btn.booked {
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+    cursor: not-allowed;
+}
+
+.seat-btn.reserved {
+    background: #ffc107;
+    color: white;
+    border-color: #ffc107;
+    cursor: not-allowed;
+}
+
+.seat-btn.selected {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+    transform: scale(1.1);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedSeats = [];
+
+document.querySelectorAll('.seat-btn.available').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const seatId = this.dataset.seatId;
+        const price = parseFloat(this.dataset.price);
+        const seatLabel = this.textContent;
+        
+        if (this.classList.contains('selected')) {
+            // Deselect
+            this.classList.remove('selected');
+            selectedSeats = selectedSeats.filter(s => s.id !== seatId);
+        } else {
+            // Select
+            this.classList.add('selected');
+            selectedSeats.push({id: seatId, label: seatLabel, price: price});
+        }
+        
+        updateSelection();
+    });
+});
+
+function updateSelection() {
+    const listDiv = document.getElementById('selected-seats-list');
+    const totalDiv = document.getElementById('total-price');
+    const addBtn = document.getElementById('add-to-cart-btn');
+    
+    if (selectedSeats.length === 0) {
+        listDiv.innerHTML = '<p class="text-muted">No seats selected</p>';
+        totalDiv.textContent = '₹0';
+        addBtn.disabled = true;
+    } else {
+        let html = '<ul class="list-unstyled">';
+        let total = 0;
+        selectedSeats.forEach(seat => {
+            html += `<li class="mb-2">Seat ${seat.label} - ₹${seat.price}</li>`;
+            total += seat.price;
+        });
+        html += '</ul>';
+        listDiv.innerHTML = html;
+        totalDiv.textContent = '₹' + total.toFixed(2);
+        addBtn.disabled = false;
+    }
+}
+
+document.getElementById('add-to-cart-btn').addEventListener('click', function() {
+    if (selectedSeats.length === 0) return;
+    
+    const formData = new FormData();
+    formData.append('event_id', '{{ event.id }}');
+    selectedSeats.forEach(seat => {
+        formData.append('seat_ids[]', seat.id);
+    });
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    fetch("{% url 'bookings:add_to_cart' %}", {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Seats added to cart!');
+            window.location.href = "{% url 'bookings:view_cart' %}";
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+});
+
+// Auto-refresh seat availability every 30 seconds
+setInterval(() => {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %}
