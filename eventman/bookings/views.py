@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.db import transaction
 from datetime import timedelta
+import math
 from events.models import Event, Seat, SeatCategory
 from .models import Booking, Ticket, Cart, CartItem, Payment
 import uuid
@@ -23,10 +24,15 @@ def select_seats(request, event_slug):
         defaults={'expires_at': timezone.now() + timedelta(minutes=15)}
     )
     
-    # If cart exists and not expired, extend expiration
+    # If cart exists and not expired, extend expiration and reserved holds
     if not created and not cart.is_expired():
         cart.expires_at = timezone.now() + timedelta(minutes=15)
         cart.save()
+        # Extend reserved_until on all reserved seats in this cart
+        for item in cart.items.all():
+            if item.seat.status == 'reserved':
+                item.seat.reserved_until = cart.expires_at
+                item.seat.save()
     
     # Check if cart is expired
     if cart.is_expired():
@@ -133,16 +139,32 @@ def view_cart(request):
             item.seat.reserved_until = None
             item.seat.save()
         cart.items.all().delete()
-        return redirect('events:home')
+        # Reset the cart window and send user back to seat selection for the event
+        cart.expires_at = timezone.now() + timedelta(minutes=15)
+        cart.save()
+        return redirect('bookings:select_seats', event_slug=cart.event.slug)
+
+    # Extend cart expiration when viewing the cart to give users full time window
+    cart.expires_at = timezone.now() + timedelta(minutes=15)
+    cart.save()
+    # Extend reserved_until for seats in this cart
+    for item in cart.items.all():
+        if item.seat.status == 'reserved':
+            item.seat.reserved_until = cart.expires_at
+            item.seat.save()
     
     items = cart.items.all()
     total = sum(item.seat_category.price for item in items)
     
+    # Compute remaining time in minutes (rounded up, minimum 1 minute)
+    remaining_delta = cart.expires_at - timezone.now()
+    remaining_minutes = max(1, math.ceil(remaining_delta.total_seconds() / 60))
+
     context = {
         'cart': cart,
         'items': items,
         'total': total,
-        'time_remaining': (cart.expires_at - timezone.now()).seconds // 60,
+        'time_remaining': remaining_minutes,
     }
     return render(request, 'bookings/cart.html', context)
 
@@ -178,8 +200,24 @@ def checkout(request):
         return redirect('events:event_list')
     
     if cart.is_expired():
-        messages.error(request, 'Your cart has expired.')
-        return redirect('events:home')
+        messages.error(request, 'Your cart has expired. Please select seats again.')
+        # Release seats
+        for item in cart.items.all():
+            item.seat.status = 'available'
+            item.seat.reserved_until = None
+            item.seat.save()
+        cart.items.all().delete()
+        cart.expires_at = timezone.now() + timedelta(minutes=15)
+        cart.save()
+        return redirect('bookings:select_seats', event_slug=cart.event.slug)
+
+    # Extend cart expiration and reserved holds when entering checkout
+    cart.expires_at = timezone.now() + timedelta(minutes=15)
+    cart.save()
+    for item in cart.items.all():
+        if item.seat.status == 'reserved':
+            item.seat.reserved_until = cart.expires_at
+            item.seat.save()
     
     if request.method == 'POST':
         contact_name = request.POST.get('contact_name')
